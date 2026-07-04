@@ -4,7 +4,6 @@ import 'repository.dart';
 
 class TaskRepository implements Repository<Task> {
   final JsonService jsonService;
-
   List<Task> _tasks = [];
 
   TaskRepository(this.jsonService);
@@ -31,25 +30,17 @@ class TaskRepository implements Repository<Task> {
     await save();
   }
 
-@override
+  @override
   Future<List<Task>> getAll() async {
-  return List<Task>.from(_tasks);
-}
+    return List<Task>.from(_tasks);
+  }
 
   @override
   Future<Task?> findById(String id) async {
     try {
-      return _tasks.firstWhere(
-        (e) => e.id == id,
-      );
+      return _tasks.firstWhere((e) => e.id == id);
     } catch (_) {
       return null;
     }
-  }
-
-  /// utilisé uniquement dans les tests
-  Future<void> clear() async {
-    _tasks.clear();
-    await save();
   }
 }

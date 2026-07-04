@@ -6,13 +6,19 @@ class UrgentTask extends Task {
     required super.id,
     required super.title,
     super.dueDate,
-    super.completed = false,
   }) : super(
           priority: Priority.high,
         );
 
   @override
-  String toString() {
-    return "🔥 $title (${priority.label})";
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'priority': priority.name,
+      'dueDate': dueDate?.toIso8601String(),
+      'completed': completed,
+      'type': 'urgent',
+    };
   }
 }

@@ -1,81 +1,55 @@
-import '../exceptions/task_exception.dart';
 import '../models/task.dart';
+import '../exceptions/task_exception.dart';
 import '../repositories/repository.dart';
 
-class TaskService {
-  final Repository<Task> repository;
+class TaskService<T extends Task> {
+  final Repository<T> repository;
 
   TaskService(this.repository);
 
-  Future<void> addTask(Task task) async {
+  Future<void> addTask(T task) async {
     await repository.add(task);
   }
 
-  Future<List<Task>> getTasks() async {
-    return await repository.getAll();
-  }
-
-  Future<Task> getTaskById(String id) async {
-    final task = await repository.findById(id);
-
-    if (task == null) {
-      throw TaskException("Task not found.");
-    }
-
-    return task;
+  Future<List<T>> getTasks() async {
+    return repository.getAll();
   }
 
   Future<void> completeTask(String id) async {
-    final task = await repository.findById(id);
+    final tasks = await repository.getAll();
 
-    if (task == null) {
-      throw TaskException("Task not found.");
-    }
+    final task = tasks.firstWhere(
+      (t) => t.id == id,
+      orElse: () => throw TaskException("Task not found"),
+    );
 
-    task.markCompleted();
-
+    task.completed = true;
     await repository.save();
   }
 
   Future<void> deleteTask(String id) async {
-    final task = await repository.findById(id);
-
-    if (task == null) {
-      throw TaskException("Task not found.");
-    }
-
     await repository.remove(id);
   }
 
-  Future<List<Task>> getTasksSortedByPriority() async {
-    final tasks = await repository.getAll();
+  Future<List<T>> getTasksSortedByPriority() async {
+    final tasks = List<T>.from(await repository.getAll());
 
-    tasks.sort(
-      (a, b) => b.priority.level.compareTo(a.priority.level),
-    );
+    tasks.sort((a, b) => b.priority.level.compareTo(a.priority.level));
 
     return tasks;
   }
 
   Future<List<Task>> getTasksSortedByDate() async {
-    final tasks = await repository.getAll();
+  final tasks = await repository.getAll();
 
-    tasks.sort((a, b) {
-      if (a.dueDate == null && b.dueDate == null) {
-        return 0;
-      }
+  final sorted = List<Task>.from(tasks);
 
-      if (a.dueDate == null) {
-        return 1;
-      }
+  sorted.sort((a, b) {
+    if (a.dueDate == null) return 1;
+    if (b.dueDate == null) return -1;
+    return a.dueDate!.compareTo(b.dueDate!);
+  });
 
-      if (b.dueDate == null) {
-        return -1;
-      }
-
-      return a.dueDate!.compareTo(b.dueDate!);
-    });
-
-    return tasks;
-  }
+  return sorted;
+}
 }

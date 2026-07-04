@@ -1,48 +1,41 @@
 import 'dart:convert';
 import 'dart:io';
-
-import '../exceptions/task_exception.dart';
-import '../models/basic_task.dart';
 import '../models/task.dart';
+import '../models/urgent_task.dart';
 
 class JsonService {
   final File file = File("data/tasks.json");
 
   Future<List<Task>> load() async {
-    try {
-      if (!await file.exists()) {
-        await file.create(recursive: true);
-        await file.writeAsString("[]");
+    if (!await file.exists()) return [];
+
+    final content = await file.readAsString();
+
+    if (content.isEmpty) return [];
+
+    final List data = jsonDecode(content);
+
+    return data.map<Task>((e) {
+      if (e['type'] == 'urgent') {
+        return UrgentTask(
+          id: e['id'],
+          title: e['title'],
+          dueDate: e['dueDate'] != null
+              ? DateTime.parse(e['dueDate'])
+              : null,
+        );
       }
 
-      final jsonString = await file.readAsString();
-
-      if (jsonString.trim().isEmpty) {
-        return [];
-      }
-
-      final List<dynamic> data = jsonDecode(jsonString);
-
-      return List<Task>.from(
-            data.map((e) => BasicTask.fromJson(e)),
-          );
-    } on FormatException {
-      throw TaskException("Le fichier JSON est invalide.");
-    } on IOException {
-      throw TaskException("Impossible de lire le fichier.");
-    }
+      return UrgentTask(
+        id: e['id'],
+        title: e['title'],
+        dueDate: null,
+      );
+    }).toList();
   }
 
   Future<void> save(List<Task> tasks) async {
-    try {
-      final json =
-          tasks.map((e) => e.toJson()).toList();
-
-      await file.writeAsString(
-        const JsonEncoder.withIndent("  ").convert(json),
-      );
-    } on IOException {
-      throw TaskException("Impossible d'enregistrer les tâches.");
-    }
+    final data = tasks.map((e) => e.toJson()).toList();
+    await file.writeAsString(jsonEncode(data));
   }
 }

@@ -60,4 +60,32 @@ void main() {
 
   });
 
+  test("Repository isolation test", () async {
+  final repo = FakeRepository();
+
+  await repo.add(
+    BasicTask(
+      id: "1",
+      title: "Test",
+      priority: Priority.low,
+    ),
+  );
+
+  expect(await repo.getAll(), isNotEmpty);
+});
+
+test("FindById returns null when missing", () async {
+  final repo = FakeRepository();
+
+  final result = await repo.findById("404");
+
+  expect(result, isNull);
+});
+
+test("Repository starts empty", () async {
+  final repo = FakeRepository();
+
+  expect(await repo.getAll(), isEmpty);
+});
+
 }
